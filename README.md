@@ -10,7 +10,7 @@ More importantly, this repository is an honest account of the scientific and com
 
 The primary success of this project was the development of a robust LAMMPS script (`scripts/in.create_nanowire.lmp`) that reliably produces a structurally sound and thermally equilibrated Al nanowire at 300K.
 
-![Placeholder for your image](https://via.placeholder.com/600x400.png?text=Upload+a+Screenshot+of+Your+Final+Wire+in+OVITO!)
+![Final Equilibrated Nanowire](images/nanowire_final.png)
 *Visualization of the final, equilibrated nanowire using OVITO. The structure is stable, and atoms are vibrating around their lattice positions at 300K.*
 
 ---
