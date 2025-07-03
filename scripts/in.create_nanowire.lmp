@@ -1,0 +1,73 @@
+# --------------------- INITIALIZATION ------------------------
+# This section remains largely the same.
+
+units           metal
+dimension       3
+boundary        p s s         
+atom_style      atomic
+atom_modify     map array
+
+
+# We will create a smaller, thinner wire to speed up computation.
+
+lattice         fcc 4.05
+
+# Define a smaller simulation box with adequate vacuum padding
+region          simbox block -20 20 -20 20 0 30 units lattice
+create_box      1 simbox
+
+# Define a THINNER and SHORTER cylindrical region for the nanowire
+region          wire_region cylinder z 0 0 8 0 30 units lattice
+                # axis = z, center_x = 0, center_y = 0, radius = 8 , low_z = 0, high_z = 30 
+
+# Create atoms ONLY inside the new, smaller cylindrical region
+create_atoms    1 region wire_region
+# --------------------- FORCE FIELD (POTENTIAL) -------------------
+
+
+pair_style      eam/alloy
+pair_coeff      * * Al99.eam.alloy Al
+
+neighbor        2.0 bin
+neigh_modify    every 1 delay 0 check yes
+
+# --------------------- STRUCTURAL RELAXATION ----------------------
+# NEW SECTION! This is where we find the lowest energy structure.
+
+# Output the state of the wire BEFORE relaxation for comparison
+dump            pre_relax all custom 1 nanowire_pre_relax.dump id type x y z
+run             0
+undump          pre_relax
+
+# Perform the energy minimization
+# This command tells LAMMPS to adjust atom coordinates to minimize the
+# potential energy of the system until one of the stopping criteria is met.
+minimize        1.0e-6 1.0e-8 5000 10000
+
+# --------------------- THERMAL EQUILIBRATION -------------------
+# Now we heat up the RELAXED structure.
+
+# We must reset the timestep to 0 after a minimize command
+reset_timestep  0
+
+# Assign velocities to the atoms
+velocity        all create 300.0 54321 dist gaussian
+
+# NVT equilibration run to bring the wire to 300K
+fix             1 all nvt temp 300.0 300.0 0.1
+timestep        0.001
+
+thermo          500
+thermo_style    custom step pe temp press
+
+# Dump the final, relaxed, and thermalized wire structure
+dump            1 all custom 1000 nanowire_equil.dump id type x y z
+
+run             3000        # Run for 10 ps to ensure it's stable
+
+# ... (after the final 'run' command)
+
+write_data  data.nanowire_relaxed
+
+print           "Nanowire relaxation and equilibration complete."
+
